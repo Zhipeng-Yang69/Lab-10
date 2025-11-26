@@ -1,0 +1,25 @@
+To: FrobozzCo Management
+Subject: FCCU SQL Injection Vulnerabilities
+Date: November 2025
+
+Summary of the Security Flaw
+
+The FCCU web application contains a critical SQL Injection vulnerability in its account-lookup and login code. The application directly concatenates user input into SQL statements without validation or escaping. Because of this, an attacker can inject arbitrary SQL fragments into the query. This allows unauthorized logins, arbitrary account access, and execution of unintended SQL operations such as transferring funds. The absence of prepared statements and input filtering makes exploitation trivial. Given that all functionality (including sensitive operations like wiring money) is exposed through the web interface, this flaw compromises both confidentiality and integrity of FCCU user data.
+
+Description of the Fix
+
+To remediate the vulnerability, I implemented server-side input validation combined with prepared SQL statements. All externally supplied data is now sanitized by rejecting characters outside the expected format (digits only for account IDs, fixed formats for routing/account numbers, and proper escaping for names). More importantly, SQL queries were rewritten to use prepared statements with bound parameters, ensuring that user input can never alter the structure of the query. Even if an attacker submits malicious strings, the SQL interpreter treats them only as literal data. This completely prevents the injection technique used in the exploit.
+
+Recovery Plan and Impact Assessment
+
+The breach is severe: attackers were able to log into accounts without credentials, view sensitive personal information, and illegally initiate wire transfers. Although the SQL injection flaw primarily affects the application layer, it is theoretically possible that attackers could escalate by injecting commands into database functions or writing files if the database user had excessive privileges. While full root compromise is not confirmed, it cannot be ruled out.
+
+The immediate recovery plan should include:
+
+- Shutting down and reimaging the server to eliminate potential backdoors.
+- Resetting all database credentials and reviewing DB-user privileges to enforce least-privilege.
+- Reissuing new passwords to all FCCU users.
+- Auditing all transactions and logs to identify unauthorized transfers.
+- Deploying the patched FCCU application, enforcing prepared statements across all pages.
+- Implementing routine code reviews and security scanning to prevent recurrence.
+- The compromise demonstrates that application-level input handling was insufficient. Going forward, development standards must require secure coding practices and regular penetration testing.
